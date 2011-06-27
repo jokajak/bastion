@@ -59,12 +59,6 @@ class RootController(BaseController):
         """Illustrate how a page for managers only works."""
         return dict(page='managers stuff')
 
-    @expose('bastion.templates.index')
-    @require(predicates.is_user('editor', msg=l_('Only for the editor')))
-    def editor_user_only(self, **kw):
-        """Illustrate how a page exclusive for the editor works."""
-        return dict(page='editor stuff')
-
     @expose('bastion.templates.login')
     def login(self, came_from=url('/')):
         """Start the user login."""
