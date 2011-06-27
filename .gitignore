@@ -1,1 +1,3 @@
 devdata.db
+*.py[oc]
+data/sessions
