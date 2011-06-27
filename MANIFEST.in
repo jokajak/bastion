@@ -1,0 +1,4 @@
+recursive-include bastion/public *
+include bastion/public/favicon.ico
+recursive-include bastion/i18n *
+recursive-include bastion/templates *
