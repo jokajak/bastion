@@ -36,7 +36,11 @@ class RootController(BaseController):
     @require(predicates.not_anonymous(msg="Only logged in users can access this site"))
     def index(self):
         """Handle the front-page."""
+        from bastion.model.auth import User
         remote_addr = request.environ.get('REMOTE_ADDR', 'unknown addr')
+        userid = request.identity['repoze.who.userid']
+        user = User.by_user_name(userid)
+        user.travel_addr = remote_addr
         return dict(page='index',
                     remote_addr=remote_addr)
 
@@ -50,9 +54,9 @@ class RootController(BaseController):
         """Display some information about auth* on this application."""
         return dict(page='auth')
 
-    @expose('bastion.templates.index')
+    @expose('bastion.templates.manage')
     @require(predicates.has_permission('manage', msg=l_('Only for managers')))
-    def manage(self, **kw):
+    def admin(self, **kw):
         from bastion.model.auth import User
 
         users = DBSession.query(User).get_all()
