@@ -1,4 +1,4 @@
 devdata.db
-*/*.pyo
-*/*.pyc
+*.pyo
+*.pyc
 data/sessions
