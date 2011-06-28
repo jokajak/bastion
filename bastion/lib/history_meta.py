@@ -3,7 +3,6 @@ from sqlalchemy.orm import mapper, class_mapper, attributes, object_mapper
 from sqlalchemy.orm.exc import UnmappedClassError, UnmappedColumnError
 from sqlalchemy import Table, Column, ForeignKeyConstraint, Integer, DateTime, ForeignKey
 from sqlalchemy.orm.interfaces import SessionExtension
-from sqlalchemy.orm.properties import RelationshipProperty
 from tg import request
 import datetime
 
@@ -30,7 +29,7 @@ def _history_mapper(local_mapper):
     if not super_mapper or local_mapper.local_table is not super_mapper.local_table:
         cols = []
         for column in local_mapper.local_table.c:
-            if column.name == 'version' or column.name == 'timestamp' or column.name == 'user_id':
+            if column.name == 'version':
                 continue
 
             col = column.copy()
@@ -47,12 +46,8 @@ def _history_mapper(local_mapper):
         if super_mapper:
             super_fks.append(('version', super_history_mapper.base_mapper.local_table.c.version))
             cols.append(Column('version', Integer, primary_key=True))
-            cols.append(Column('timestamp', DateTime, default=datetime.datetime.utcnow(), nullable=False))
-            cols.append(Column('user_id', Integer, ForeignKey('user.user_id'), nullable=False))
         else:
             cols.append(Column('version', Integer, primary_key=True))
-            cols.append(Column('timestamp', DateTime, default=datetime.datetime.utcnow(), nullable=False))
-            cols.append(Column('user_id', Integer, ForeignKey('user.user_id'), nullable=False))
 
         if super_fks:
             cols.append(ForeignKeyConstraint(*zip(*super_fks)))
@@ -120,7 +115,7 @@ def create_version(obj, session, deleted = False):
             continue
 
         for hist_col in hm.local_table.c:
-            if hist_col.key == 'version' or hist_col.key == 'timestamp' or hist_col.key == 'user_id':
+            if hist_col.key == 'version':
                 continue
 
             obj_col = om.local_table.c[hist_col.key]
@@ -130,7 +125,7 @@ def create_version(obj, session, deleted = False):
             # mapped column.  this will allow usage of MapperProperties
             # that have a different keyname than that of the mapped column.
             try:
-                prop = obj_mapper.get_property_by_column(obj_col)
+                prop = obj_mapper._get_col_to_prop(obj_col)
             except UnmappedColumnError:
                 # in the case of single table inheritance, there may be 
                 # columns on the mapped table intended for the subclass only.
@@ -155,21 +150,10 @@ def create_version(obj, session, deleted = False):
                 attr[hist_col.key] = a[0]
                 obj_changed = True
 
-    if not obj_changed:
-        # not changed, but we have relationships.  OK
-        # check those too
-        for prop in obj_mapper.iterate_properties:
-            if isinstance(prop, RelationshipProperty) and \
-                attributes.get_history(obj, prop.key).has_changes():
-                obj_changed = True
-                break
-
     if not obj_changed and not deleted:
         return
 
     attr['version'] = obj.version
-    userid = request.identity['user'].user_id
-    attr['user_id'] = userid
     hist = history_cls()
     for key, value in attr.iteritems():
         setattr(hist, key, value)
