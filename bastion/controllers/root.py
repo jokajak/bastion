@@ -5,6 +5,9 @@ from tg import expose, flash, require, url, request, redirect
 from pylons.i18n import ugettext as _, lazy_ugettext as l_
 from repoze.what import predicates
 from datetime import datetime
+from tw.forms import DataGrid
+from tg.decorators import paginate
+import genshi
 
 from bastion.lib.base import BaseController
 from bastion.model import DBSession, metadata
@@ -14,6 +17,15 @@ from bastion.controllers.secure import SecureController
 
 __all__ = ['RootController']
 
+user_grid = DataGrid(fields=[
+    ('Username', 'user_name'),
+    ('Home IP', 'home_addr'),
+    ('Home Last Updated', 'home_updated'),
+    ('Travel IP', 'travel_addr'),
+    ('Travel Last Updated', 'travel_updated'),
+    ('Action', lambda obj:genshi.Markup('<a href="%s">Remove Home IP</a>' % url('/delHome', params=dict(user_id=obj.user_id)))),
+    ('Action', lambda obj:genshi.Markup('<a href="%s">Remove Travel IP</a>' % url('/delTravel', params=dict(user_id=obj.user_id))))
+])
 
 class RootController(BaseController):
     """
@@ -64,20 +76,18 @@ class RootController(BaseController):
         """Handle the 'about' page."""
         return dict(page='about')
 
-    @expose('bastion.templates.authentication')
-    def auth(self):
-        """Display some information about auth* on this application."""
-        return dict(page='auth')
-
     @expose('bastion.templates.admin')
+    @paginate("users", items_per_page=25)
     @require(predicates.has_permission('manage', msg=l_('Only for managers')))
     def admin(self, **kw):
         remote_addr = request.environ.get('REMOTE_ADDR', 'unknown addr')
         from bastion.model.auth import User
 
-        users = DBSession.query(User).all()
+        users = DBSession.query(User)
         """Illustrate how a page for managers only works."""
-        return dict(page='managers stuff')
+        return dict(page='managers stuff',
+                    grid=user_grid,
+                    users=users)
 
     @expose('bastion.templates.login')
     def login(self, came_from=url('/')):
