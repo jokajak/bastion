@@ -122,12 +122,16 @@ class RootController(BaseController):
         redirect(came_from)
 
     @expose()
-    def delHome(self, user_id, came_from=url('/admin')):
+    def delHome(self, user_id=None, came_from=url('/admin')):
         """
         Redirect the user to the initially requested page when home is removed
         and inform the user the action was performed
         """
-        user = User.by_user_id(user_id)
+        if (not user_id):
+            user_name = request.identity['repoze.who.userid']
+            user = User.by_user_name(user_name)
+        else:
+            user = User.by_user_id(user_id)
         user.home_addr = None
 
         flash(_("The home IP has been removed"))
