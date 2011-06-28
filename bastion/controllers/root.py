@@ -4,6 +4,7 @@
 from tg import expose, flash, require, url, request, redirect
 from pylons.i18n import ugettext as _, lazy_ugettext as l_
 from repoze.what import predicates
+from datetime import datetime
 
 from bastion.lib.base import BaseController
 from bastion.model import DBSession, metadata
@@ -41,8 +42,22 @@ class RootController(BaseController):
         userid = request.identity['repoze.who.userid']
         user = User.by_user_name(userid)
         user.travel_addr = remote_addr
+        user.travel_updated = datetime.now()
         return dict(page='index',
                     remote_addr=remote_addr)
+
+    @expose('bastion.templates.homeip')
+    @expose('json')
+    @require(predicates.not_anonymous(msg='Only logged in users can access this site'))
+    def sethome(self, came_from=url('/')):
+        """Handle homeip requests"""
+        from bastion.model.auth import User
+        remote_addr = request.environ.get('REMOTE_ADDR', 'unknown addr')
+        userid = request.identity['repoze.who.userid']
+        user = User.by_user_name(userid)
+        user.home_addr = remote_addr
+        user.home_updated = datetime.now()
+        return dict(came_from=came_from, remote_addr=remote_addr)
 
     @expose('bastion.templates.about')
     def about(self):
@@ -54,12 +69,13 @@ class RootController(BaseController):
         """Display some information about auth* on this application."""
         return dict(page='auth')
 
-    @expose('bastion.templates.manage')
+    @expose('bastion.templates.admin')
     @require(predicates.has_permission('manage', msg=l_('Only for managers')))
     def admin(self, **kw):
+        remote_addr = request.environ.get('REMOTE_ADDR', 'unknown addr')
         from bastion.model.auth import User
 
-        users = DBSession.query(User).get_all()
+        users = DBSession.query(User).all()
         """Illustrate how a page for managers only works."""
         return dict(page='managers stuff')
 
