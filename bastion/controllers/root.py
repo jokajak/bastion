@@ -14,6 +14,7 @@ from bastion.model import DBSession, metadata
 from bastion.controllers.error import ErrorController
 from bastion import model
 from bastion.controllers.secure import SecureController
+from bastion.model.auth import User
 
 __all__ = ['RootController']
 
@@ -41,15 +42,12 @@ class RootController(BaseController):
     must be wrapped around with :class:`tg.controllers.WSGIAppController`.
 
     """
-    secc = SecureController()
-
     error = ErrorController()
 
     @expose('bastion.templates.index')
     @require(predicates.not_anonymous(msg="Only logged in users can access this site"))
     def index(self):
         """Handle the front-page."""
-        from bastion.model.auth import User
         remote_addr = request.environ.get('REMOTE_ADDR', 'unknown addr')
         userid = request.identity['repoze.who.userid']
         user = User.by_user_name(userid)
@@ -60,18 +58,18 @@ class RootController(BaseController):
                     remote_addr=remote_addr,
                     isHome=remote_addr==user.home_addr)
 
-    @expose('bastion.templates.homeip')
+    @expose()
     @expose('json')
     @require(predicates.not_anonymous(msg='Only logged in users can access this site'))
     def sethome(self, came_from=url('/')):
         """Handle homeip requests"""
-        from bastion.model.auth import User
         remote_addr = request.environ.get('REMOTE_ADDR', 'unknown addr')
         userid = request.identity['repoze.who.userid']
         user = User.by_user_name(userid)
         user.home_addr = remote_addr
         user.home_updated = datetime.now()
-        return dict(came_from=came_from, remote_addr=remote_addr)
+        flash(_("%s has been set as your home IP" % remote_addr))
+        redirect(came_from)
 
     @expose('bastion.templates.about')
     def about(self):
@@ -83,7 +81,6 @@ class RootController(BaseController):
     @require(predicates.has_permission('manage', msg=l_('Only for managers')))
     def admin(self, **kw):
         remote_addr = request.environ.get('REMOTE_ADDR', 'unknown addr')
-        from bastion.model.auth import User
 
         users = DBSession.query(User)
         """Illustrate how a page for managers only works."""
@@ -122,4 +119,16 @@ class RootController(BaseController):
 
         """
         flash(_('We hope to see you soon!'))
+        redirect(came_from)
+
+    @expose()
+    def delHome(self, user_id, came_from=url('/admin')):
+        """
+        Redirect the user to the initially requested page when home is removed
+        and inform the user the action was performed
+        """
+        user = User.by_user_id(user_id)
+        user.home_addr = None
+
+        flash(_("The home IP has been removed"))
         redirect(came_from)
