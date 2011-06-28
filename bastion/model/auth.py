@@ -144,6 +144,11 @@ class User(DeclarativeBase):
         return perms
 
     @classmethod
+    def by_user_id(cls, user_id):
+        """Return the user object whose user name is ``username``."""
+        return DBSession.query(cls).filter(cls.user_id==user_id).first()
+
+    @classmethod
     def by_user_name(cls, username):
         """Return the user object whose user name is ``username``."""
         return DBSession.query(cls).filter(cls.user_name==username).first()
