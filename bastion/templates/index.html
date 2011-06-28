@@ -12,6 +12,9 @@
 </head>
 
 <body>
-  <p>IP Address: ${remote_addr} <a href="${tg.url('/sethome')}" id="homelink">This is my home ip</a></p>
+  <div py:choose="">
+      <p py:when="isHome">${remote_addr} is your home ip</p>
+      <p py:when="not isHome">${remote_addr} is your travel ip <a href="${tg.url('/sethome')}" id="homelink">Make this my home ip</a></p>
+  </div>
 </body>
 </html>

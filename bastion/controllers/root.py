@@ -53,10 +53,12 @@ class RootController(BaseController):
         remote_addr = request.environ.get('REMOTE_ADDR', 'unknown addr')
         userid = request.identity['repoze.who.userid']
         user = User.by_user_name(userid)
-        user.travel_addr = remote_addr
-        user.travel_updated = datetime.now()
+        if (remote_addr != user.home_addr):
+            user.travel_addr = remote_addr
+            user.travel_updated = datetime.now()
         return dict(page='index',
-                    remote_addr=remote_addr)
+                    remote_addr=remote_addr,
+                    isHome=remote_addr==user.home_addr)
 
     @expose('bastion.templates.homeip')
     @expose('json')
