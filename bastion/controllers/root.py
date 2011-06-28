@@ -132,3 +132,15 @@ class RootController(BaseController):
 
         flash(_("The home IP has been removed"))
         redirect(came_from)
+
+    @expose()
+    def delTravel(self, user_id, came_from=url('/admin')):
+        """
+        Redirect the user to the initially requested page when home is removed
+        and inform the user the action was performed
+        """
+        user = User.by_user_id(user_id)
+        user.travel_addr = None
+
+        flash(_("The travel IP has been removed"))
+        redirect(came_from)
