@@ -24,6 +24,7 @@ from sqlalchemy.types import Unicode, Integer, DateTime
 from sqlalchemy.orm import relation, synonym
 
 from bastion.model import DeclarativeBase, metadata, DBSession
+from bastion.lib.history_meta import VersionedMeta
 
 __all__ = ['User', 'Group', 'Permission']
 
@@ -100,6 +101,7 @@ class User(DeclarativeBase):
 
     """
     __tablename__ = 'users'
+    __metaclass__ = VersionedMeta
 
     #{ Columns
 
