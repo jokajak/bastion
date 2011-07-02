@@ -15,8 +15,12 @@ from bastion.controllers.error import ErrorController
 from bastion import model
 from bastion.controllers.secure import SecureController
 from bastion.model.auth import User
+from bastion.lib.scheduler.scheduler import add_single_task
+from bastion.lib.netgroups import sync_entries
 
 __all__ = ['RootController']
+import logging
+log = logging.getLogger(__name__)
 
 user_grid = DataGrid(fields=[
     ('Username', 'user_name'),
@@ -54,6 +58,12 @@ class RootController(BaseController):
         if (remote_addr != user.home_addr):
             user.travel_addr = remote_addr
             user.travel_updated = datetime.now()
+            try:
+                # if the task is already running just piggy back on the next
+                # run
+                add_single_task(action=sync_entries, taskname="sync", initialdelay=5)
+            except ValueError:
+                pass
         return dict(page='index',
                     remote_addr=remote_addr,
                     isHome=remote_addr==user.home_addr)
@@ -68,6 +78,11 @@ class RootController(BaseController):
         user = User.by_user_name(userid)
         user.home_addr = remote_addr
         user.home_updated = datetime.now()
+        try:
+            # if the task is already running just piggy back on the next run
+            add_single_task(action=sync_entries, taskname="sync", initialdelay=5)
+        except ValueError:
+            pass
         flash(_("%s has been set as your home IP" % remote_addr))
         redirect(came_from)
 
@@ -134,6 +149,11 @@ class RootController(BaseController):
             user = User.by_user_id(user_id)
         user.home_addr = None
 
+        try:
+            # if the task is already running just piggy back on the next run
+            add_single_task(action=sync_entries, taskname="sync", initialdelay=5)
+        except ValueError:
+            pass
         flash(_("The home IP has been removed"))
         redirect(came_from)
 
@@ -146,5 +166,10 @@ class RootController(BaseController):
         user = User.by_user_id(user_id)
         user.travel_addr = None
 
+        try:
+            # if the task is already running just piggy back on the next run
+            add_single_task(action=sync_entries, taskname="sync", initialdelay=5)
+        except ValueError:
+            pass
         flash(_("The travel IP has been removed"))
         redirect(came_from)
