@@ -136,7 +136,7 @@ def sync_entries():
     [actions.append(format_mod_entry(entry[0], entry[1], entry[2])) for entry in to_modify]
     [actions.append(format_add_entry(entry[0], entry[1], entry[2])) for username, entry in db_home_lookup.iteritems()]
     if len(actions) > 0:
-        log.debug("Synchronizing home hosts")
+        log.info("Synchronizing %d home hosts" % len(actions))
         log.debug(netgroup)
         log.debug(actions)
         res = con.modify(netgroup, actions)
@@ -168,7 +168,7 @@ def sync_entries():
     [actions.append(format_mod_entry(entry[0], entry[1], entry[2])) for entry in to_modify]
     [actions.append(format_remove_entry(entry[0], entry[1], entry[2])) for entry in to_prune]
     if len(actions) > 0:
-        log.debug("Synchronizing travel hosts")
+        log.info("Synchronizing %d travel hosts" % len(actions))
         log.debug(netgroup)
         log.debug(actions)
         res = con.modify(netgroup, actions)
