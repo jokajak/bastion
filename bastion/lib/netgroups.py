@@ -71,6 +71,11 @@ def prune_expired_entries(entries, timeout):
 
 def sync_entries():
     log.debug("sync_entries: Starting")
+    enabled = asbool(tg.config.get('netgroups.sync_ldap'))
+    if not enabled:
+        scheduler.rename_task("sync", "sync-completed")
+        log.info("LDAP synchronization disabled")
+        return
     from bastion.model.auth import User
     users = DBSession.query(User)
 
