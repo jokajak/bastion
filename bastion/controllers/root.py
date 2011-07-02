@@ -80,7 +80,8 @@ class RootController(BaseController):
             if ip in network:
                 return dict(page='index',
                             remote_addr=remote_addr,
-                            isExcluded=true)
+                            isHome=False,
+                            isExcluded=ip in network)
         if (remote_addr != user.home_addr):
             user.travel_addr = remote_addr
             user.travel_updated = datetime.now()

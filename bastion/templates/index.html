@@ -13,8 +13,9 @@
 
 <body>
   <div py:choose="">
-      <p py:when="isHome">${remote_addr} is your home IP. <a href="${tg.url('/delHome?came_from=/')}" id="homelink">Forget this IP.</a></p>
-      <p py:when="not isHome">${remote_addr} is your travel IP. <a href="${tg.url('/sethome')}" id="homelink">Make this my home IP.</a></p>
+      <p py:when="isExcluded">${remote_addr} is on a excluded network.</p>
+      <p py:when="isHome and not isExcluded">${remote_addr} is your home IP. <a href="${tg.url('/delHome?came_from=/')}" id="homelink">Forget this IP.</a></p>
+      <p py:when="not isHome and not isExcluded">${remote_addr} is your travel IP. <a href="${tg.url('/sethome')}" id="homelink">Make this my home IP.</a></p>
   </div>
 </body>
 </html>
