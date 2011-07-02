@@ -17,7 +17,8 @@ from tg.configuration import AppConfig
 
 import bastion
 from bastion import model
-from bastion.lib import app_globals, helpers 
+from bastion.lib import app_globals, helpers
+from cron import schedule
 
 base_config = AppConfig()
 base_config.renderers = []
@@ -63,3 +64,5 @@ base_config.sa_auth.post_login_url = '/post_login'
 # You may optionally define a page where you want users to be redirected to
 # on logout:
 base_config.sa_auth.post_logout_url = '/post_logout'
+
+base_config.call_on_startup = [schedule]
