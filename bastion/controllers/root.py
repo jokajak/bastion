@@ -18,6 +18,7 @@ from bastion.controllers.secure import SecureController
 from bastion.model.auth import User
 from bastion.lib.scheduler.scheduler import add_single_task
 from bastion.lib.netgroups import sync_entries
+from bastion.lib.ipaddr import IPNetwork, IPAddress
 
 __all__ = ['RootController']
 import logging
@@ -32,6 +33,20 @@ user_grid = DataGrid(fields=[
     ('Action', lambda obj:genshi.Markup('<a href="%s">Remove Home IP</a>' % url('/delHome', params=dict(user_id=obj.user_id)))),
     ('Action', lambda obj:genshi.Markup('<a href="%s">Remove Travel IP</a>' % url('/delTravel', params=dict(user_id=obj.user_id))))
 ])
+
+private_networks = tg.config.get('netgroups.excluded_networks')
+if private_networks:
+    private_networks = private_networks.split(" ")
+    excluded_networks = []
+    for network in private_networks:
+        try:
+            net = IPNetwork(network)
+            excluded_networks.append(net)
+        except ValueError:
+            log.warn("Network %s does not appear valid, skipping" % network)
+    log.debug(excluded_networks)
+else:
+    log.info("No excluded networks configured")
 
 class RootController(BaseController):
     """
@@ -54,8 +69,18 @@ class RootController(BaseController):
     def index(self):
         """Handle the front-page."""
         remote_addr = request.environ.get('REMOTE_ADDR', 'unknown addr')
+        try:
+            ip = IPAddress(remote_addr)
+        except:
+            ip = None
+            pass
         userid = request.identity['repoze.who.userid']
         user = User.by_user_name(userid)
+        for network in excluded_networks:
+            if ip in network:
+                return dict(page='index',
+                            remote_addr=remote_addr,
+                            isExcluded=true)
         if (remote_addr != user.home_addr):
             user.travel_addr = remote_addr
             user.travel_updated = datetime.now()
@@ -74,6 +99,7 @@ class RootController(BaseController):
     @require(predicates.not_anonymous(msg='Only logged in users can access this site'))
     def sethome(self, came_from=url('/')):
         """Handle homeip requests"""
+        msg = _("%s has been set as your home IP" % remote_addr)
         remote_addr = request.environ.get('REMOTE_ADDR', 'unknown addr')
         userid = request.identity['repoze.who.userid']
         user = User.by_user_name(userid)
@@ -84,7 +110,11 @@ class RootController(BaseController):
             add_single_task(action=sync_entries, taskname="sync", initialdelay=5)
         except ValueError:
             pass
-        flash(_("%s has been set as your home IP" % remote_addr))
+        for network in excluded_networks:
+            if remote_addr in network:
+                msg = _("%s has NOT been set as your home IP.  It is on an excluded network" % remote_addr)
+                redirect(came_from)
+        flash(msg)
         redirect(came_from)
 
     @expose('bastion.templates.about')
