@@ -8,7 +8,7 @@ from paste.deploy.converters import asbool
 import logging
 log = logging.getLogger(__name__)
 
-nisNetgroupTriple = "( %s , %s , %s )"
+nisNetgroupTriple = "( %s, %s, %s )"
 def format_add_entry(hostname, user, timestamp):
     return (ldap.MOD_ADD, 'nisNetgroupTriple', str(nisNetgroupTriple % (hostname, user, timestamp )))
 
