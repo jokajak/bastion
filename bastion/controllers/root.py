@@ -7,6 +7,7 @@ from repoze.what import predicates
 from datetime import datetime
 from tw.forms import DataGrid
 from tg.decorators import paginate
+import tg
 import genshi
 
 from bastion.lib.base import BaseController
@@ -173,3 +174,25 @@ class RootController(BaseController):
             pass
         flash(_("The travel IP has been removed"))
         redirect(came_from)
+
+    @expose('json')
+    def export_dns(self, types=None):
+        domain = tg.config.get('netgroups.domain', 'travel.addrs')
+        home_netgroup = tg.config.get('netgroups.home', 'home')
+        travel_netgroup = tg.config.get('netgroups.travel', 'travel')
+        home_timeout = tg.config.get('netgroups.timeout.%s' % home_netgroup)
+        travel_timeout = tg.config.get('netgroups.timeout.%s' % travel_netgroup)
+        res = []
+        if not types:
+            users = DBSession.query(User)
+            for user in users:
+                if user.home_addr:
+                    hostname = "%s.%s.%s" % (user.user_name, home_netgroup, domain)
+                    res.append("+%s:%s:15" % (hostname, user.home_addr))
+                if user.travel_addr:
+                    hostname = "%s.%s.%s" % (user.user_name, travel_netgroup, domain)
+                    res.append("+%s:%s:15" % (hostname, user.travel_addr))
+
+        else:
+            pass
+        return dict(data=res)
