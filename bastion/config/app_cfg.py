@@ -42,17 +42,6 @@ base_config.DBSession = bastion.model.DBSession
 # YOU MUST CHANGE THIS VALUE IN PRODUCTION TO SECURE YOUR APP
 base_config.sa_auth.cookie_secret = "ChangeME"
 
-# Configure the authentication backend
-base_config.auth_backend = 'sqlalchemy'
-base_config.sa_auth.dbsession = model.DBSession
-# what is the class you want to use to search for users in the database
-base_config.sa_auth.user_class = model.User
-# what is the class you want to use to search for groups in the database
-base_config.sa_auth.group_class = model.Group
-# what is the class you want to use to search for permissions in the database
-base_config.sa_auth.permission_class = model.Permission
-
-
 # override this if you would like to provide a different who plugin for
 # managing login and logout of your application
 base_config.sa_auth.form_plugin = None
