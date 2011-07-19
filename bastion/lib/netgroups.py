@@ -153,7 +153,6 @@ def sync_entries():
     db_user_lookup = dict([(entry[1], entry) for entry in db_travel_entries])
     log.debug(db_user_lookup)
     log.debug(db_travel_entries)
-    log.debug(format_add_entry(db_travel_entries[0][0], db_travel_entries[0][1], db_travel_entries[0][2]))
 
     to_modify = []
     for entry in ldap_travel_entries:
