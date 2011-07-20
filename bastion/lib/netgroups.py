@@ -43,9 +43,9 @@ def get_current_entries(con, netgroup_dn, netgroup):
     return dn, res
 
 def get_connection():
-    ldap_server = tg.config.get('ldap.server')
-    bind_dn = tg.config.get('ldap.bind_dn')
-    pw = tg.config.get('ldap.bind_password')
+    ldap_server = tg.config.get('netgroups.ldap_server')
+    bind_dn = tg.config.get('netgroups.ldap_bind_dn')
+    pw = tg.config.get('netgroups.ldap_bind_password')
     con = ldap.initialize(ldap_server)
     res = con.simple_bind(bind_dn, pw)
     return con
