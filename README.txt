@@ -22,3 +22,11 @@ While developing you may want the server to reload after changes in package file
     $ paster serve --reload development.ini
 
 Then you are ready to go.
+
+Purpose of bastion
+==================
+
+Bastion was developed as an application to act as an application that
+temporarily allows remote IP addresses to connect to the local network.  The
+specific problem it solved was to allow users to log in to the website and
+then be able to SSH in to the network from that IP address.
