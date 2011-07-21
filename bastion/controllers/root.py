@@ -3,6 +3,7 @@
 
 from tg import expose, flash, require, url, request, redirect
 from pylons.i18n import ugettext as _, lazy_ugettext as l_
+from paste.httpexceptions import HTTPUnauthorized
 from repoze.what import predicates
 from datetime import datetime
 from tw.forms import DataGrid
@@ -65,7 +66,6 @@ class RootController(BaseController):
     error = ErrorController()
 
     @expose('bastion.templates.index')
-    @require(predicates.not_anonymous(msg="Only logged in users can access this site"))
     def index(self):
         """Handle the front-page."""
         remote_addr = request.environ.get('REMOTE_ADDR', 'unknown addr')
@@ -74,8 +74,17 @@ class RootController(BaseController):
         except:
             ip = None
             pass
+        if request.identity == None:
+            flash(_("Only logged in users can access this site"))
+            raise HTTPUnauthorized(_("Only logged in users can access this site"))
         userid = request.identity['repoze.who.userid']
         user = User.by_user_name(userid)
+        if not user:
+            log.warn("User %s is not in the database, adding" % userid)
+            newUser = User()
+            newUser.user_name = userid
+            newUser.display_name = request.identity['cn'][0]
+            DBSession.add(newUser)
         for network in excluded_networks:
             if ip in network:
                 return dict(page='index',
@@ -125,13 +134,13 @@ class RootController(BaseController):
 
     @expose('bastion.templates.admin')
     @paginate("users", items_per_page=25)
-    @require(predicates.has_permission('manage', msg=l_('Only for managers')))
+    @require(predicates.has_permission('manage', msg=l_('Only for administrators')))
     def admin(self, **kw):
         remote_addr = request.environ.get('REMOTE_ADDR', 'unknown addr')
 
         users = DBSession.query(User)
         """Illustrate how a page for managers only works."""
-        return dict(page='managers stuff',
+        return dict(page='admin',
                     grid=user_grid,
                     users=users)
 
