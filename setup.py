@@ -8,11 +8,11 @@ except ImportError:
 
 setup(
     name='bastion',
-    version='0.1',
+    version='0.1.0',
     description='',
-    author='',
-    author_email='',
-    #url='',
+    author='Jokajak',
+    author_email='jokajak@gmail.com',
+    url='https://github.com/jokajak/bastion',
     install_requires=[
         "TurboGears2 >= 2.0b7",
         "Babel >=0.9.4",
