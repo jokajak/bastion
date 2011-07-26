@@ -85,6 +85,7 @@ class RootController(BaseController):
             newUser.user_name = userid
             newUser.display_name = request.identity['cn'][0]
             DBSession.add(newUser)
+            user = newUser
         for network in excluded_networks:
             if ip in network:
                 return dict(page='index',
@@ -102,15 +103,16 @@ class RootController(BaseController):
                 pass
         return dict(page='index',
                     remote_addr=remote_addr,
-                    isHome=remote_addr==user.home_addr)
+                    isHome=remote_addr==user.home_addr,
+                    isExcluded=False)
 
     @expose()
     @expose('json')
     @require(predicates.not_anonymous(msg='Only logged in users can access this site'))
     def sethome(self, came_from=url('/')):
         """Handle homeip requests"""
-        msg = _("%s has been set as your home IP" % remote_addr)
         remote_addr = request.environ.get('REMOTE_ADDR', 'unknown addr')
+        msg = _("%s has been set as your home IP" % remote_addr)
         userid = request.identity['repoze.who.userid']
         user = User.by_user_name(userid)
         user.home_addr = remote_addr
@@ -120,8 +122,13 @@ class RootController(BaseController):
             add_single_task(action=sync_entries, taskname="sync", initialdelay=5)
         except ValueError:
             pass
+        try:
+            ip = IPAddress(remote_addr)
+        except:
+            ip = None
+            pass
         for network in excluded_networks:
-            if remote_addr in network:
+            if ip in network:
                 msg = _("%s has NOT been set as your home IP.  It is on an excluded network" % remote_addr)
                 redirect(came_from)
         flash(msg)
